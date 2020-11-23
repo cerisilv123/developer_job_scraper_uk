@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}UK Job Scraper{% endblock %}
+{% block content %}
+<h1>UK Software Developer Job Scraper</h1>
+<form action="#" method="post">
+    <div class="form-group">
+      <label for="exampleFormControlSelect1">Select Programming Language:</label>
+      <select class="form-control" id="exampleFormControlSelect1" name="language_selected">
+        <option>Python</option>
+        <option>Java</option>
+        <option>Javascript</option>
+        <option>Ruby</option>
+        <option>Go</option>
+      </select>
+      <label for="exampleFormControlSelect1">Select Location:</label>
+      <select class="form-control" id="exampleFormControlSelect1" name="location_selected">
+        <option>London</option>
+        <option>Manchester</option>
+        <option>Bristol</option>
+        <option>Birmingham</option>
+        <option>Nottingham</option>
+      </select>
+      <p><input type="submit", value="submit"></p>
+    </div>
+  </form>
+  <div class="job-result">
+  {% for job in job_results %}
+  <p>Job Title: {{job["title"]}}</p>
+  <p>Company: {{job["company"]}}</p>
+  <p>Location: {{job["location"]}}</p>
+  <a href="{{job["link"]}}" target="_blank">Apply here</a>
+  {% endfor %}
+  </div>
+{% endblock %}
