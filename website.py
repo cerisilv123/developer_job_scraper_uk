@@ -1,10 +1,30 @@
 from flask import Flask, redirect, url_for, render_template, request, session, flash
 from datetime import timedelta
+from flask_sqlalchemy import SQLAlchemy
 import job_scraper
 import concurrent.futures
+import secrets
 
 app = Flask(__name__)
 
+random_session_key = secrets.token_urlsafe(16) # Create a random key varable to encrypt session on server
+app.secret_key = random_session_key
+
+app.config['SQLAlchemy_DATABASE_URI'] = 'sqlite:///users.sqlite3'
+app.config['SQLALchemy_TRACK_MODIFICATION'] = False # Wont show errror message when making change to db
+db = SQLAlchemy(app)
+
+# DB MODELS
+class User(db.Model):
+    id = db.Column("id", db.Integer, primary_key = True)
+    user_email = db.Column(db.String(100))
+    user_password = db.Column(db.String(100))
+
+    def __init__(self, email, password):
+        self.user_email = email
+        self.user_password = password
+
+# ROUTES
 @app.route("/", methods = ["POST", "GET"])
 def home():
     if request.method == "POST":
@@ -34,6 +54,48 @@ def results(results, location):
             job_results += job_results_cvlibrary.result()
 
         return(render_template("results.html", job_results = job_results))
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["form_email_login"]
+        password = request.form["form_password_login"]
+        found_user_email = User.query.filter_by(user_email = email).first() 
+        found_user_password = User.query.filter_by(user_password = password).first()
+        if found_user_email != None and found_user_password != None: 
+            found_user_email = found_user_email.user_email
+            found_user_password = found_user_password.user_password
+            if found_user_email == email and found_user_password == password:
+                return(redirect(url_for("home")))
+            else: 
+                flash("Details are incorrect, please try again!")
+                return(redirect(url_for("login")))
+        else: 
+            flash("Woops! Details are incorrect, please try again!")
+            return(redirect(url_for("login")))
+    else: 
+        return render_template("login.html")
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        email = request.form["form_email_register"]
+        password = request.form["form_password_register"]
+        user_account = User(email, password)
+        found_user_email = User.query.filter_by(user_email = email).first() # Checking to see if email already exists in DB
+        if found_user_email != None: 
+            found_user_email = found_user_email.user_email
+
+        if found_user_email == email: 
+            flash("Sorry, this email already exists!")
+            return redirect(url_for("register"))
+        else: 
+            db.session.add(user_account)
+            db.session.commit()
+            return redirect(url_for("login"))
+    else: 
+        return render_template("register.html")
     
 if __name__ == "__main__":
+    db.create_all()
     app.run(debug=True)

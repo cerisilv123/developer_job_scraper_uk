@@ -8,6 +8,9 @@ beautifulsoup4 = "*"
 pylint = "*"
 flask = "*"
 requests = "*"
+flask-sqlalchemy = "*"
+pylint-flask = "*"
+pylint-flask-sqlalchemy = "*"
 
 [dev-packages]
 

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<h1>UK Software Developer Job Scraper</h1>
+<h2>Login</h2>
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for msg in messages %}
+            <p>{{msg}}</p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+<form action="#", method="post">
+    <p>Enter your email: </p>
+    <p><input type="text", name = "form_email_login"/></p>
+    <p>Enter a password: </p>
+    <p><input type="text", name = "form_password_login"/></p>
+    <p><input type="submit", value="submit"/></p>
+</form>
+{% endblock %}
