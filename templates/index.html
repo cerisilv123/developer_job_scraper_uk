@@ -2,6 +2,13 @@
 {% block title %}UK Job Scraper{% endblock %}
 {% block content %}
 <h1>UK Software Developer Job Scraper</h1>
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for msg in messages %}
+            <p>{{msg}}</p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 <form action="#" method="post">
     <div class="form-group">
       <label for="exampleFormControlSelect1">Select Programming Language:</label>

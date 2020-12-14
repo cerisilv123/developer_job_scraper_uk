@@ -66,6 +66,7 @@ def login():
             found_user_email = found_user_email.user_email
             found_user_password = found_user_password.user_password
             if found_user_email == email and found_user_password == password:
+                session["user_session"] = email # Creating a session and storing the users email in session object
                 return(redirect(url_for("home")))
             else: 
                 flash("Details are incorrect, please try again!")
@@ -78,6 +79,9 @@ def login():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if "user_session" in session: # This would only occur if user heads to link indirectly
+        flash("You need to log out first before you can register another account.")
+        return redirect(url_for("home"))
     if request.method == "POST":
         email = request.form["form_email_register"]
         password = request.form["form_password_register"]
@@ -85,7 +89,6 @@ def register():
         found_user_email = User.query.filter_by(user_email = email).first() # Checking to see if email already exists in DB
         if found_user_email != None: 
             found_user_email = found_user_email.user_email
-
         if found_user_email == email: 
             flash("Sorry, this email already exists!")
             return redirect(url_for("register"))
@@ -95,6 +98,14 @@ def register():
             return redirect(url_for("login"))
     else: 
         return render_template("register.html")
+
+@app.route("/logout")
+def logout():
+    if "user_session" in session:
+        session.pop("user_session", None) # Logging user out of session
+        flash("You have been logged out!")
+    return redirect(url_for("login"))
+
     
 if __name__ == "__main__":
     db.create_all()
