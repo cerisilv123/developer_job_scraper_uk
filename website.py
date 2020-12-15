@@ -24,6 +24,21 @@ class User(db.Model):
         self.user_email = email
         self.user_password = password
 
+class SavedLink(db.Model):
+    id = db.Column("id", db.Integer, primary_key=True)
+    user_email = db.Column(db.String(100))
+    saved_title = db.Column(db.String(200))
+    saved_company = db.Column(db.String(200))
+    saved_location = db.Column(db.String(200))
+    saved_link = db.Column(db.String(500))
+
+    def __init__(self, email, title, company, location, link):
+        self.user_email = email
+        self.saved_title = title
+        self.saved_company = company
+        self.saved_location = location
+        self.saved_link = link
+
 # ROUTES
 @app.route("/", methods = ["POST", "GET"])
 def home():
@@ -37,21 +52,36 @@ def home():
 @app.route("/results/<results>/<location>", methods = ["POST", "GET"])
 def results(results, location):
     if request.method == "POST":
-        search_results = request.form["language_selected"]
-        search_location = request.form["location_selected"]
-        return redirect(url_for("results", results = search_results, location = search_location))
+        if request.form["button"] == "submit":
+            search_results = request.form["language_selected"]
+            search_location = request.form["location_selected"]
+            return redirect(url_for("results", results = search_results, location = search_location))
+        elif request.form["button"] == "save": # Saving user links to db to display on saved page
+            if "user_session" in session: 
+                saved_email = session["user_session"]
+                saved_title = request.form["saved_title"]
+                saved_company = request.form["saved_company"]
+                saved_location = request.form["saved_location"]
+                saved_link = request.form["saved_link"]
+                link_to_save = SavedLink(saved_email, saved_title, saved_company, saved_location, saved_link)
+                db.session.add(link_to_save)
+                db.session.commit()
+                return redirect(request.referrer) # Redirects to the same page when post request is sent
+            else:
+                flash("Please log in to save jobs!")
+                return redirect(url_for("login"))
     else: 
         job_results = []
         # Scraping jobs - Using multithreading to run functions in parallel and speed up scraping speed
         with concurrent.futures.ProcessPoolExecutor() as executor: 
             job_results_monster = executor.submit(job_scraper.scrape_jobs_monster, location, results)
-            job_results_reed = executor.submit(job_scraper.scrape_jobs_reed, location, results)
+            '''job_results_reed = executor.submit(job_scraper.scrape_jobs_reed, location, results)
             job_results_jobsite = executor.submit(job_scraper.scrape_jobs_jobsite, location, results)
-            job_results_cvlibrary = executor.submit(job_scraper.scrape_jobs_cvlibrary, location, results)
+            job_results_cvlibrary = executor.submit(job_scraper.scrape_jobs_cvlibrary, location, results)'''
             job_results += job_results_monster.result()
-            job_results += job_results_reed.result()
+            '''job_results += job_results_reed.result()
             job_results += job_results_jobsite.result()
-            job_results += job_results_cvlibrary.result()
+            job_results += job_results_cvlibrary.result()'''
 
         return(render_template("results.html", job_results = job_results))
 
@@ -105,6 +135,15 @@ def logout():
         session.pop("user_session", None) # Logging user out of session
         flash("You have been logged out!")
     return redirect(url_for("login"))
+
+@app.route("/saved")
+def saved():
+    if "user_session" in session:
+        saved_results = SavedLink.query.filter_by(user_email=session["user_session"]).all()
+        return render_template("saved.html", saved_results=saved_results)
+    else: 
+        flash("You must be logged in to view saved jobs!")
+        return redirect(url_for("login"))
 
     
 if __name__ == "__main__":
