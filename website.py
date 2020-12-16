@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template, request, session, flash
+from flask import Flask, redirect, url_for, render_template, request, session, flash, send_file
 from datetime import timedelta
 from flask_sqlalchemy import SQLAlchemy
 import job_scraper
@@ -24,21 +24,6 @@ class User(db.Model):
         self.user_email = email
         self.user_password = password
 
-class SavedLink(db.Model):
-    id = db.Column("id", db.Integer, primary_key=True)
-    user_email = db.Column(db.String(100))
-    saved_title = db.Column(db.String(200))
-    saved_company = db.Column(db.String(200))
-    saved_location = db.Column(db.String(200))
-    saved_link = db.Column(db.String(500))
-
-    def __init__(self, email, title, company, location, link):
-        self.user_email = email
-        self.saved_title = title
-        self.saved_company = company
-        self.saved_location = location
-        self.saved_link = link
-
 # ROUTES
 @app.route("/", methods = ["POST", "GET"])
 def home():
@@ -52,24 +37,12 @@ def home():
 @app.route("/results/<results>/<location>", methods = ["POST", "GET"])
 def results(results, location):
     if request.method == "POST":
-        if request.form["button"] == "submit":
+        if request.form["button"] == "submit": # User wants to scrape jobs 
             search_results = request.form["language_selected"]
             search_location = request.form["location_selected"]
             return redirect(url_for("results", results = search_results, location = search_location))
-        elif request.form["button"] == "save": # Saving user links to db to display on saved page
-            if "user_session" in session: 
-                saved_email = session["user_session"]
-                saved_title = request.form["saved_title"]
-                saved_company = request.form["saved_company"]
-                saved_location = request.form["saved_location"]
-                saved_link = request.form["saved_link"]
-                link_to_save = SavedLink(saved_email, saved_title, saved_company, saved_location, saved_link)
-                db.session.add(link_to_save)
-                db.session.commit()
-                return redirect(request.referrer) # Redirects to the same page when post request is sent
-            else:
-                flash("Please log in to save jobs!")
-                return redirect(url_for("login"))
+        elif request.form["button"] != "submit": # User wants to download jobs to CSV file
+            return redirect(url_for("download"))
     else: 
         job_results = []
         # Scraping jobs - Using multithreading to run functions in parallel and speed up scraping speed
@@ -82,6 +55,8 @@ def results(results, location):
             '''job_results += job_results_reed.result()
             job_results += job_results_jobsite.result()
             job_results += job_results_cvlibrary.result()'''
+
+        job_scraper.write_jobs_to_csv(job_results)
 
         return(render_template("results.html", job_results = job_results))
 
@@ -105,7 +80,11 @@ def login():
             flash("Woops! Details are incorrect, please try again!")
             return(redirect(url_for("login")))
     else: 
-        return render_template("login.html")
+        if "user_session" in session: 
+            flash("You are already logged in!")
+            return redirect(url_for("home"))
+        else: 
+            return render_template("login.html")
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -136,14 +115,17 @@ def logout():
         flash("You have been logged out!")
     return redirect(url_for("login"))
 
-@app.route("/saved")
-def saved():
-    if "user_session" in session:
-        saved_results = SavedLink.query.filter_by(user_email=session["user_session"]).all()
-        return render_template("saved.html", saved_results=saved_results)
-    else: 
-        flash("You must be logged in to view saved jobs!")
-        return redirect(url_for("login"))
+@app.route("/download")
+def download():
+    try:
+        return send_file("jobresults-download.csv", attachment_filename="jobresults-download.csv")
+    except: 
+        abort(404)
+    flash("Downloading search results.. :)")
+    return redirect(url_for("home"))
+
+
+
 
     
 if __name__ == "__main__":

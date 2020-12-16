@@ -24,19 +24,15 @@
     </div>
   </form>
   <p>It may take a couple of minutes to scrape jobs from multiple sites.. :)</p>
+  <form action="#" method="post">
+    <input type="submit" name="button" value="Download">
+  </form>
   <div class="job-result">
   {% for x in range(job_results|length) %}
     <p>Job Title: {{job_results[x]["title"]}}</p>
     <p>Company: {{job_results[x]["company"]}}</p>
     <p>Location: {{job_results[x]["location"]}}</p>
     <a href="{{job_results[x]["link"]}}" target="_blank">Apply here</a>
-    <form method="post">
-      <p><input type="submit", name="button" value="save"></p>
-      <input type="hidden" name="saved_title" value="{{job_results[x]["title"]}}"> 
-      <input type="hidden" name="saved_company" value="{{job_results[x]["company"]}}"> 
-      <input type="hidden" name="saved_location" value="{{job_results[x]["location"]}}"> 
-      <input type="hidden" name="saved_link" value="{{job_results[x]["link"]}}"> 
-    </form>
   {% endfor %}
   </div>
 {% endblock %}

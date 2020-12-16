@@ -1,5 +1,6 @@
 import requests
 import time
+import csv
 from bs4 import BeautifulSoup
 
 #Function to scrape jobs from Monster Jobs 
@@ -165,3 +166,21 @@ def scrape_jobs_cvlibrary(location_input, role_type_input):
                     job_posting_objs.append(job)
     
     return job_posting_objs
+
+# Function to write job results to CSV so user can download
+def write_jobs_to_csv(job_results):
+    with open("jobresults-download.csv", "w", newline="") as file: 
+        file_writer = csv.writer(file)
+        file_writer.writerow(["title", "company", "location", "link"])
+        for dict_result in job_results:
+            line_to_write = []
+            for key in dict_result: 
+                line_to_write.append(dict_result[key])
+            file_writer.writerow(line_to_write)
+
+        
+
+
+
+
+
