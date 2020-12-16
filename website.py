@@ -123,11 +123,7 @@ def download():
         abort(404)
     flash("Downloading search results.. :)")
     return redirect(url_for("home"))
-
-
-
-
-    
+   
 if __name__ == "__main__":
     db.create_all()
     app.run(debug=True)
