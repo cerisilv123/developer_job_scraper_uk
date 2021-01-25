@@ -48,13 +48,13 @@ def results(results, location):
         # Scraping jobs - Using multithreading to run functions in parallel and speed up scraping speed
         with concurrent.futures.ProcessPoolExecutor() as executor: 
             job_results_monster = executor.submit(job_scraper.scrape_jobs_monster, location, results)
-            '''job_results_reed = executor.submit(job_scraper.scrape_jobs_reed, location, results)
-            job_results_jobsite = executor.submit(job_scraper.scrape_jobs_jobsite, location, results)
-            job_results_cvlibrary = executor.submit(job_scraper.scrape_jobs_cvlibrary, location, results)'''
+            job_results_reed = executor.submit(job_scraper.scrape_jobs_reed, location, results)
+            # job_results_jobsite = executor.submit(job_scraper.scrape_jobs_jobsite, location, results)
+            job_results_cvlibrary = executor.submit(job_scraper.scrape_jobs_cvlibrary, location, results)
             job_results += job_results_monster.result()
-            '''job_results += job_results_reed.result()
-            job_results += job_results_jobsite.result()
-            job_results += job_results_cvlibrary.result()'''
+            job_results += job_results_reed.result()
+            # job_results += job_results_jobsite.result()
+            job_results += job_results_cvlibrary.result()
 
         job_scraper.write_jobs_to_csv(job_results)
 

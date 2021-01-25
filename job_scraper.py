@@ -8,7 +8,7 @@ def scrape_jobs_monster(location_input, role_type_input):
     location = location_input
     role_type = role_type_input
 
-    URL = f'https://www.monster.co.uk/jobs/search/?q={role_type.lower()}-engineer&where={location.lower()}&cy=uk&client=power&stpage=1&page=10'
+    URL = f'https://www.monster.co.uk/jobs/search?q={role_type.lower()}+developer+&where={location.lower()}&page=10'
 
     page = requests.get(URL)
 
@@ -95,32 +95,28 @@ def scrape_jobs_jobsite(location_input, role_type_input):
 
     job_posting_objs = []
     
-    for x in range(1, 6):
+    URL = f"https://www.jobsite.co.uk/jobs/{role_type.lower()}-developer/in-{location.lower()}?radius=20&page=2"
+        
+    page = requests.get(URL)
 
-        time.sleep(0.2) # slow down the number of requests made to server 
+    soup = BeautifulSoup(page.content, "html.parser")
 
-        URL = f"https://www.jobsite.co.uk/jobs/{role_type.lower()}-developer/in-{location.lower()}?radius=20&s=header&page={x}"
+    results = soup.find("div", class_="row job-results-row")
+
+    if results is not None:
+        job_elems = results.find_all("div", class_="job")
+        
+        for job_elem in job_elems:
+            title_elem = job_elem.find("h2").text.strip()
+            location_elem = location
+            company_elem = job_elem.find("li", class_="company").text.strip()
+            link_elem = job_elem.find("a")["href"]
             
-        page = requests.get(URL)
+            if None in (title_elem, location_elem, company_elem, link_elem):
+                continue
 
-        soup = BeautifulSoup(page.content, "html.parser")
-
-        results = soup.find("div", class_="row job-results-row")
-
-        if results is not None:
-            job_elems = results.find_all("div", class_="job")
-            
-            for job_elem in job_elems:
-                title_elem = job_elem.find("h2").text.strip()
-                location_elem = location
-                company_elem = job_elem.find("li", class_="company").text.strip()
-                link_elem = job_elem.find("a")["href"]
-                
-                if None in (title_elem, location_elem, company_elem, link_elem):
-                    continue
-
-                job = {"title": title_elem, "company": company_elem, "location": location_elem, "link": link_elem}
-                job_posting_objs.append(job)
+            job = {"title": title_elem, "company": company_elem, "location": location_elem, "link": link_elem}
+            job_posting_objs.append(job)
 
     return job_posting_objs            
 
